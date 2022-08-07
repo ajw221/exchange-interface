@@ -1,5 +1,3 @@
-Exchange Interface testing using Gherkin BDD
-
 # Setup
 
 Create a .env file with the following structure:
