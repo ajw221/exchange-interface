@@ -1,0 +1,44 @@
+# This image takes longer than normal to build, but is built to be as small as possible.
+ARG PACKAGE_NAME_ARG=exchange_interface
+
+# Creating builder
+FROM clux/muslrust:stable as builder
+ARG PACKAGE_NAME_ARG
+ENV PACKAGE_NAME=$PACKAGE_NAME_ARG
+
+COPY .env .
+COPY build.rs .
+COPY Cargo.lock .
+COPY Cargo.toml .
+COPY src ./src
+COPY objects ./objects
+
+RUN set -x && cargo build --target x86_64-unknown-linux-musl --release
+
+RUN mkdir -p /build
+RUN mkdir -p /build/public_features /build/private_features
+
+COPY src/public_features /build/public_features
+COPY src/private_features /build/private_features
+
+RUN set -x && cp target/x86_64-unknown-linux-musl/release/$PACKAGE_NAME /build/
+
+
+# Creating required request certificates
+FROM alpine:latest as certs
+RUN apk --update add ca-certificates
+
+
+# Building image
+FROM scratch
+ARG PACKAGE_NAME_ARG
+ENV PACKAGE_NAME=$PACKAGE_NAME_ARG
+
+COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /build/$PACKAGE_NAME /
+COPY --from=builder /build/public_features /public_features
+COPY --from=builder /build/private_features /private_features
+
+EXPOSE 8000:8000
+
+CMD ["/exchange_interface"]

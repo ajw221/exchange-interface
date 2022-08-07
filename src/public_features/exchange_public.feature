@@ -1,4 +1,3 @@
-# Feature: Exchange with Public and Private APIs
 Feature: Exchange Public API Endpoints 
     Background: 
         Given an exchange instance

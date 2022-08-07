@@ -3,10 +3,6 @@ name = "exchange_interface"
 version = "0.0.1"
 edition = "2021"
 
-[[test]]
-name = "exchange_interface"
-harness = false
-
 [dependencies]
 async-trait = "0.1"
 base64 = "0.13"
@@ -23,6 +19,5 @@ tokio = { version = "1", features = ["full"] }
 path = "./objects"
 
 [build-dependencies]
-dotenv = "0.15.0"
 dotenv-build = "0.1"
 
