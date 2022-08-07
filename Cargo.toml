@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1"
 base64 = "0.13"
-cucumber = "0.13"
+cucumber = { version = "0.13", features = ["output-json"] }
 dotenv = "0.15.0"
 hmac = "0.10"
 reqwest = { version = "0.11", features = ["json"] }

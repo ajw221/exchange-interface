@@ -11,7 +11,8 @@ use cucumber::{
     then,
     when,
     World, 
-    WorldInit
+    WorldInit,
+    writer::Json,
 };
 
 use hmac::{
@@ -40,6 +41,7 @@ use sha2::{
 
 use std::{
     convert::Infallible,
+    fs::File,
     env::var,
     time::{
         SystemTime,
@@ -398,11 +400,12 @@ async fn validate_open_orders_response(w: &mut ExchangeWorld) {
 
 #[tokio::main]
 async fn main() {
-    if std::path::Path::new("/public_features").exists() {
-        ExchangeWorld::run("/public_features").await;
-        ExchangeWorld::run("/private_features").await;
-    } else {
-        ExchangeWorld::run("src/public_features").await;
-        ExchangeWorld::run("src/private_features").await;
+    let mut public_features_path = String::from("/public_features");
+    let mut private_features_path = String::from("/private_features");
+    if !std::path::Path::new(&public_features_path).exists() {
+        public_features_path = format!("src{}",&public_features_path.to_string());
+        private_features_path = format!("src{}",&private_features_path.to_string());
     }
+    ExchangeWorld::cucumber().with_writer(Json::new(File::create("public_features_report.json").unwrap())).run(&public_features_path).await;
+    ExchangeWorld::cucumber().with_writer(Json::new(File::create("private_features_report.json").unwrap())).run(&private_features_path).await;
 }
