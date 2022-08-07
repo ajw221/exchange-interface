@@ -39,10 +39,22 @@ use sha2::{
     Sha512,
 };
 
+use serde_json::{
+    Error as jsonError,
+    from_str,
+    to_string_pretty,
+    Value,
+};
+
 use std::{
     convert::Infallible,
-    fs::File,
     env::var,
+    fs::{
+        File,
+        read_to_string,
+        self,
+    },
+    path::Path,
     time::{
         SystemTime,
         UNIX_EPOCH,
@@ -402,10 +414,35 @@ async fn validate_open_orders_response(w: &mut ExchangeWorld) {
 async fn main() {
     let mut public_features_path = String::from("/public_features");
     let mut private_features_path = String::from("/private_features");
-    if !std::path::Path::new(&public_features_path).exists() {
+    if !Path::new(&public_features_path).exists() {
         public_features_path = format!("src{}",&public_features_path.to_string());
         private_features_path = format!("src{}",&private_features_path.to_string());
     }
     ExchangeWorld::cucumber().with_writer(Json::new(File::create("public_features_report.json").unwrap())).run(&public_features_path).await;
     ExchangeWorld::cucumber().with_writer(Json::new(File::create("private_features_report.json").unwrap())).run(&private_features_path).await;
+
+    format_json_file("public_features_report.json");
+    format_json_file("private_features_report.json");
+}
+
+fn format_json_file(filename: &str) {
+    let file_string = read_to_string(filename);
+    match file_string {
+        Ok(file_str) => {
+            let result: Result<Value, jsonError> = from_str(&file_str);
+            match result {
+                Ok(value) => {
+                    let beautified = to_string_pretty(&value);
+                    match beautified {
+                        Ok(b_string) => {
+                            fs::write(filename, b_string).expect("Error writing to file.");
+                        },
+                        Err(_) => panic!("Error retrieving pretty string result.")
+                    }
+                },
+                Err(_) => panic!("Error retrieving Value result.")
+            }
+        },
+        Err(_) => panic!("Error reading file to string.")
+    }
 }
